@@ -1,0 +1,8 @@
+{
+    "redis": {
+        "server": "localhost",
+        "port": "6379",
+        "db": 0
+    },
+    "configTest": "live"
+}
