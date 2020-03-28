@@ -19,6 +19,8 @@ function updateLocationInRedis(req, res) {
     redisConn.geoadd(config.peoplesLocKey, longitude, latitude, phone, function(err, result) {
         if (!err && result) {
             return res.send(JSON.stringify({'success': true}))
+        } else {
+            return res.send(JSON.stringify({'success': false, 'err': err}))
         }
     });
     
