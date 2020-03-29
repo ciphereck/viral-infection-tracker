@@ -4,6 +4,9 @@
         "port": "6379",
         "db": 0
     },
+    "neo4j": {
+        "path": "neo4j://localhost"
+    },
     "configTest": "live",
     "peoplesLocKey": "peoplesLocation"
 }

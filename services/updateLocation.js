@@ -1,5 +1,10 @@
 const redis = require('redis');
+const neo4j = require('neo4j-driver');
+
 const redisConn = redis.createClient({'host': config.redis.host, 'port': config.redis.port});
+const driver = neo4j.driver(config.neo4j.path);
+
+const neo4jWriteSess = driver.session({defaultAccessMode: neo4j.session.WRITE});
 
 module.exports = {
     updateLocationInRedis: updateLocationInRedis
@@ -37,8 +42,41 @@ function addNewEdgeInGraph(phone, longitude, latitude, distanceInMeter) {
             list.forEach(element => {
                 edgesList.push([phone, element])
             });
-            console.log(edgesList) //todo: do something here with list of edges
+            console.log(edgesList); //todo: do something here with list of edges
+            if (!edgesList.length) {
+                return;
+            }
+            let queryParams = generateQueryForEdgeInsertion(edgesList);
+            neo4jWriteSess.run(queryParams.query, queryParams.varObj)
+            .catch(err=> console.log(`err = ${err}\nquery = ${queryParams.query}\nvarParams = ${JSON.stringify(queryParams.varObj)}`));
         }
     })
+}
+
+function generateQueryForEdgeInsertion(edges) {
+    let neo4jQuery = `CREATE `
+    let i = 0;
+    let result = {};
+    let varObj = {};
+    let nodeNames = ['a'];
+    for (let edge of edges) {
+        if (!Array.isArray(edge) || edge.length != 2) {
+            continue;
+        }
+        i = i + 1;
+        if (i > 1) {
+            neo4jQuery += ',';
+        }
+        neo4jQuery += `(a:Person{phone:${('$personA' + i + 'Phn')}})-[:MET{at:$timeStamp}]->(${('b' + i)}:Person{phone:${('$personB' + i + 'Phn')}})`;
+        neo4jQuery += `, (${('b' + i)})-[:MET{at: $timeStamp}]->(a)`;
+        varObj[`${('personA' + i + 'Phn')}`] = edge[0];
+        varObj[`${('personB' + i + 'Phn')}`] = edge[1];
+        nodeNames.push(('b' + i));
+    }
+    neo4jQuery += ' RETURN ' + nodeNames.join(',')
+    varObj.timeStamp = neo4j.int(new Date().getTime());
+    result.query = neo4jQuery;
+    result.varObj = varObj;
+    return result;
 }
 
