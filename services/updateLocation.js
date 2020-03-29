@@ -17,13 +17,28 @@ function updateLocationInRedis(req, res) {
         return res.send(JSON.stringify({'success': false, 'msg': 'Some info missing!'}));
     }
     redisConn.geoadd(config.peoplesLocKey, longitude, latitude, phone, function(err, result) {
-        if (!err && result) {
-            return res.send(JSON.stringify({'success': true}))
+        if (!err) {
+            addNewEdgeInGraph(phone, longitude, latitude, 5)
+            return res.send(JSON.stringify({'success': true, 'message': 'updated location'}))
         } else {
             return res.send(JSON.stringify({'success': false, 'err': err}))
         }
     });
-    
 }
 
+function addNewEdgeInGraph(phone, longitude, latitude, distanceInMeter) {
+    redisConn.georadius(config.peoplesLocKey, longitude, latitude, distanceInMeter, 'm', function(err, list) {
+        if(!err && list) {
+            selfIndex = list.indexOf(phone)
+            if (selfIndex != -1) {
+                list.splice(selfIndex, 1)
+            }
+            edgesList = []
+            list.forEach(element => {
+                edgesList.push([phone, element])
+            });
+            console.log(edgesList) //todo: do something here with list of edges
+        }
+    })
+}
 
