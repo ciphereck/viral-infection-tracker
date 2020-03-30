@@ -8,5 +8,18 @@
         "path": "neo4j://localhost"
     },
     "configTest": "live",
-    "peoplesLocKey": "peoplesLocation"
+    "peoplesLocKey": "peoplesLocation",
+    "kafkaClientOptions": {
+        "kafkaHost": "localhost:9092",
+        "kafkaTopics": [{
+                "topic": "edges",
+                "partitions": 1,
+                "replicationFactor": 1
+            },{
+                "topic": "people",
+                "partitions": 1,
+                "replicationFactor": 1
+            }
+        ]
+    }
 }

@@ -1,4 +1,4 @@
-config = require('config');
+config = require('./config/live');
 const express = require('express');
 const app = express();
 const port = 3000;
