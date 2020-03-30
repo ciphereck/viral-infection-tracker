@@ -1,8 +1,8 @@
 const redis = require('redis');
 const neo4j = require('neo4j-driver');
-
 const redisConn = redis.createClient({'host': config.redis.host, 'port': config.redis.port});
 const driver = neo4j.driver(config.neo4j.path);
+const kafka = require('./kafka')
 
 const neo4jWriteSess = driver.session({defaultAccessMode: neo4j.session.WRITE});
 const neo4jReadSess = driver.session();
@@ -99,6 +99,7 @@ function addNewEdgeInGraph(phone, longitude, latitude, distanceInMeter) {
             if (!edgesList.length) {
                 return;
             }
+            kafka.produceEdges(edgesList)
             let queryParams = generateQueryForEdgeInsertion(edgesList);
             neo4jWriteSess.run(queryParams.query, queryParams.varObj)
             .catch(err=> console.log(`err = ${err}\nquery = ${queryParams.query}\nvarParams = ${JSON.stringify(queryParams.varObj)}`));
