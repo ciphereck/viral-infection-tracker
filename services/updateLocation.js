@@ -9,8 +9,32 @@ const neo4jReadSess = driver.session();
 
 module.exports = {
     updateLocationInRedis: updateLocationInRedis,
-    checkSafetyForUser: checkSafetyForUser
+    checkSafetyForUser: checkSafetyForUser,
+    registerInfection: registerInfection
 };
+
+function registerInfection(req, res) {
+    let reqBody = req.body;
+    let phone = reqBody.phone;
+    let timeOfInfection = reqBody.time;
+    if (!phone || !timeOfInfection) {
+        return res.send(JSON.stringify({'success': false, 'message': 'Some info missing!'}));
+    }
+    let updInfectionQuery = `MATCH (p:Person{phone:$phone}) SET p+= {infected: true, infectedAt: $timeStamp} RETURN p`
+    driver.session().run(updInfectionQuery, {phone: phone, timeStamp: neo4j.int(timeOfInfection)}).then(result=> {
+        // session.close();
+    }).catch(err => {
+        console.log(`err = ${err}\nquery=${updInfectionQuery}`);
+    })
+    let updContactedQuery = `MATCH (p:Person{phone:$phone})-[met:MET*]->(b) WHERE any(a in met where a.at > $time15DaysBack) AND p <> b SET b+= {infectantContacted: true, infectantContactedAt: $timeStamp} RETURN p, b`
+    driver.session().run(updContactedQuery, {phone: phone, time15DaysBack: neo4j.int(new Date().getTime() - config.infectedContactDays * 24 * 60 * 60 * 1000), timeStamp: neo4j.int(timeOfInfection)}).then(result=> {
+        // session.close();
+    }).catch(err => {
+        console.log(`err = ${err}\nquery=${updContactedQuery}`);
+    })
+    return res.send(JSON.stringify({'success': true, 'message': 'DB updated!'}));
+    //produce infected's phone and timestamp on kafka
+}
 
 function checkSafetyForUser(req, res) {
     let phone = req.params.phone;

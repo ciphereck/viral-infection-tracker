@@ -8,5 +8,6 @@
         "path": "neo4j://localhost"
     },
     "configTest": "live",
-    "peoplesLocKey": "peoplesLocation"
+    "peoplesLocKey": "peoplesLocation",
+    "infectedContactDays": 15
 }
