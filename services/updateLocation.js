@@ -14,7 +14,29 @@ module.exports = {
 
 function checkSafetyForUser(req, res) {
     let phone = req.params.phone;
-
+    let flag = 'GREEN';
+    let timeDiffDays = 0;
+    let query = `MATCH (a:Person{phone:$phone}) RETURN a`
+    neo4jReadSess.run(query, {'phone': phone})
+    .then(result => {
+        console.log(JSON.stringify(result.records));
+        if (result.records && result.records.length) {
+            let record = result.records[0];
+            let properties = record._fields && record._fields.length && record._fields[0] && record._fields[0].properties;
+            if (properties && typeof properties == 'object' && properties.infected) {
+                timeDiffDays = (properties.infectedAt - new Date().getTime())/(1000 * 60 * 60 * 24);
+                flag = 'RED';
+            } else if (properties && typeof properties == 'object' && properties.infectantContacted) {
+                timeDiffDays = (properties.infectantContactedAt - new Date().getTime())/(1000 * 60 * 60 * 24);
+                flag = 'YELLOW';
+            }
+        }
+        return res.send(JSON.stringify({'success': true, 'flag': flag, 'timeDiffDays': timeDiffDays}));
+    })
+    .catch(err=> {
+        console.log(`err = ${err}`);
+        return res.send(JSON.stringify({'success': false}));
+    })
 }
 
 function updateLocationInRedis(req, res) {
@@ -61,6 +83,12 @@ function addNewEdgeInGraph(phone, longitude, latitude, distanceInMeter) {
 }
 
 function generateQueryForEdgeInsertion(edges) {
+    /*Rather Use(so as to not create multiple nodes, but multiple edges):
+    MERGE (a:Person{phone:"1234"})
+    MERGE (b:Person{phone:"1235"})
+    CREATE (a)-[:MET{at:12346}]->(b)
+    RETURN a,b
+    */
     let neo4jQuery = `CREATE `
     let i = 0;
     let result = {};
