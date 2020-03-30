@@ -1,7 +1,8 @@
 const clientOptions = config.kafkaClientOptions
     kafka = require('kafka-node'),
     client = new kafka.KafkaClient(clientOptions),
-    producer = new kafka.Producer(client);
+    producer = new kafka.Producer(client),
+    consumerService = require('./kafkaConsumers')
 
 module.exports = {
     produceEdges: produceEdges
