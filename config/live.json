@@ -9,5 +9,18 @@
     },
     "configTest": "live",
     "peoplesLocKey": "peoplesLocation",
-    "infectedContactDays": 15
+    "infectedContactDays": 15,
+    "kafkaClientOptions": {
+        "kafkaHost": "localhost:9092",
+        "kafkaTopics": [{
+                "topic": "edges",
+                "partitions": 1,
+                "replicationFactor": 1
+            },{
+                "topic": "people",
+                "partitions": 1,
+                "replicationFactor": 1
+            }
+        ]
+    }
 }
